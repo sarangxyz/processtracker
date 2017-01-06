@@ -3,10 +3,85 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Text;
 using System.Timers;
 
 namespace processtracker
 {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MemoryStatus
+    {
+        /// <summary>
+        /// Specifies the size, in bytes, of the MEMORYSTATUS structure.
+        /// Set this member to sizeof(MEMORYSTATUS) when passing it to the GlobalMemoryStatus function.
+        /// </summary>
+        public int Length;
+        /// <summary>
+        /// Specifies a number between zero and 100 that gives a general idea of current memory use, in which zero indicates no memory use and 100 indicates full memory use.
+        /// </summary>
+        public int MemoryLoad;
+        /// <summary>
+        /// Indicates the total number of bytes of physical memory.
+        /// </summary>
+        public ulong TotalPhys;
+        /// <summary>
+        /// Indicates the number of bytes of physical memory available.
+        /// </summary>
+        public ulong AvailPhys;
+        /// <summary>
+        /// Indicates the total number of bytes that can be stored in the paging file.
+        /// This number does not represent the physical size of the paging file on disk.
+        /// </summary>
+        public ulong TotalPageFile;
+        /// <summary>
+        /// Indicates the number of bytes available in the paging file.
+        /// </summary>
+        public ulong AvailPageFile;
+        /// <summary>
+        /// Indicates the total number of bytes that can be described in the user mode portion of the virtual address space of the calling process.
+        /// </summary>
+        public ulong TotalVirtual;
+        /// <summary>
+        /// Indicates the number of bytes of unreserved and uncommitted memory in the user mode portion of the virtual address space of the calling process.
+        /// </summary>
+        public ulong AvailVirtual;
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool GlobalMemoryStatus(ref MemoryStatus lpBuffer);
+
+        public static string GetMemoryStatus()
+        {
+            var retValue = new StringBuilder();
+            MemoryStatus ms = GlobalMemoryStatus();
+
+            ulong BytesFromMB = 1024 * 1024;
+            ulong BytesFromGB = BytesFromMB * 1024;
+
+            retValue.AppendLine(string.Format("Memory Load {0} %", ms.MemoryLoad));
+            retValue.AppendLine(string.Format("Total Phys  {0} MB", ms.TotalPhys / BytesFromMB));
+            retValue.AppendLine(string.Format("Avail Phys  {0} MB", ms.AvailPhys / BytesFromMB));
+            retValue.AppendLine(string.Format("Tota PFile  {0} GB", ms.TotalPageFile / BytesFromGB));
+            retValue.AppendLine(string.Format("Avai PFile  {0} GB", ms.AvailPageFile / BytesFromGB));
+            retValue.AppendLine(string.Format("Total Virt  {0} MB", ms.TotalVirtual / BytesFromMB));
+            retValue.AppendLine(string.Format("Avail Virt  {0} MB", ms.AvailVirtual / BytesFromMB));
+            return retValue.ToString();
+        }
+
+        public static MemoryStatus GlobalMemoryStatus()
+        {
+            MemoryStatus ms = new MemoryStatus();
+            ms.Length = Marshal.SizeOf(ms);
+            GlobalMemoryStatus(ref ms);
+            return ms;
+        }
+        public static int GetMemoryLoad()
+        {
+            var ms = GlobalMemoryStatus();
+            return ms.MemoryLoad;
+        }
+    }
+
     class Program
     {
         static void About()
@@ -70,8 +145,6 @@ namespace processtracker
 
         static void GenerateOutput(Options options)
         {
-            Console.Clear();
-
             var procName = options.ProcessToTrack;
             var userType = options.UserName == "current" ? UserType.CurrentUser : UserType.AllUsers;
             var group = options.GroupByName;
@@ -79,34 +152,35 @@ namespace processtracker
             System.Diagnostics.Process[] processes = GetProcesses(userType, procName);
 
 
-            int GBtoBytes = 1024 * 1024 * 1024;
+            int GBtoBytes = 1024 * 1024;
             if (processes != null && processes.Length > 0)
             {
                 Console.WriteLine("");
-                Console.WriteLine("Total Processes: {0}", processes.Length);
-
-                var compInfo = new Microsoft.VisualBasic.Devices.ComputerInfo();
-                Console.WriteLine("Total Memory:     {0:0.00} GB", (double)compInfo.TotalPhysicalMemory / GBtoBytes);
-                Console.WriteLine("Available Memory: {0:0.00} GB", (double)compInfo.AvailablePhysicalMemory / GBtoBytes);
-                Console.WriteLine("Total VM:         {0:0.00} GB", (double)compInfo.TotalVirtualMemory / GBtoBytes);
-                Console.WriteLine("Available VM:     {0:0.00} GB", (double)compInfo.AvailableVirtualMemory / GBtoBytes);
+                Console.WriteLine("Total Processes:  {0}", processes.Length);
+                Console.WriteLine("");
+                //var compInfo = new Microsoft.VisualBasic.Devices.ComputerInfo();
+                //Console.WriteLine("Total Memory:     {0:0.00} GB", (double)compInfo.TotalPhysicalMemory / GBtoBytes);
+                //Console.WriteLine("Available Memory: {0:0.00} GB", (double)compInfo.AvailablePhysicalMemory / GBtoBytes);
+                //Console.WriteLine("Total VM:         {0:0.00} GB", (double)compInfo.TotalVirtualMemory / GBtoBytes);
+                //Console.WriteLine("Available VM:     {0:0.00} GB", (double)compInfo.AvailableVirtualMemory / GBtoBytes);
+                Console.WriteLine(MemoryStatus.GetMemoryStatus());
 
                 Console.WriteLine("");
                 string pattern = "{0,-48}  {1,-16:0.00}  {2,-10}  {3,-8}  {4,-8}";
-                Console.WriteLine(string.Format(pattern, "Name (pid)", "WrkSet (GB)", "#Thds", "%CPU", "CPU(s)"));
+                Console.WriteLine(string.Format(pattern, "Name (pid)", "WrkSet (MB)", "#Thds", "%CPU", "CPU(s)"));
                 Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
 
 
-                ICollection<ProcessInfo> processInfoColl = ProcessInfoGenerator.GenerateProcessInfo(processes, options.GroupByName, options.SortOption);
+                ICollection<ProcessInfo> processInfoColl = ProcessInfoGenerator.GenerateProcessInfo(processes, options);
                 foreach (var proc in processInfoColl)
                 {
                     var processName = proc.GetNameString();
                     var cpuUsage = 0.0;
-                    double workingSetGB = proc.WorkingSet;
-                    workingSetGB /= GBtoBytes;
+                    double workingSetMB = proc.WorkingSet;
+                    workingSetMB /= GBtoBytes;
                     string cpuTime = proc.TotalProcessorTime.ToString(@"dd\.hh\:mm\:ss\.fff");
 
-                    Console.WriteLine(string.Format(pattern, processName, workingSetGB, proc.NumThreads, cpuUsage, cpuTime));
+                    Console.WriteLine(string.Format(pattern, processName, workingSetMB.ToString("N"), proc.NumThreads, cpuUsage, cpuTime));
                 }
             }
             else
@@ -118,6 +192,7 @@ namespace processtracker
         private static void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
             ++Counter;
+            Console.Clear();
             GenerateOutput(Options);
 
             if(Options.Loop != 0 && Counter >= Options.Loop)

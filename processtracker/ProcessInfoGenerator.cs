@@ -40,9 +40,9 @@ namespace processtracker
             { }
         }
 
-        static ICollection<ProcessInfo> GenerateProcessInfo_NoGroup(System.Diagnostics.Process[] processes)
+        static List<ProcessInfo> GenerateProcessInfo_NoGroup(System.Diagnostics.Process[] processes)
         {
-            ICollection<ProcessInfo> processInfoColl = new List<ProcessInfo>();
+            List<ProcessInfo> processInfoColl = new List<ProcessInfo>();
             foreach (var proc in processes)
             {
                 var procInfo = new ProcessInfo();
@@ -52,7 +52,7 @@ namespace processtracker
             return processInfoColl;
         }
 
-        static ICollection<ProcessInfo> GenerateProcessInfo_GroupByName(System.Diagnostics.Process[] processes)
+        static List<ProcessInfo> GenerateProcessInfo_GroupByName(System.Diagnostics.Process[] processes)
         {
             var processInfoCollDict = new Dictionary<string, ProcessInfo>();
             foreach (var proc in processes)
@@ -69,32 +69,35 @@ namespace processtracker
                     PopulateProcInfo(procInfo, proc);
                 }                
             }
-            return processInfoCollDict.Values;
+            return processInfoCollDict.Values.ToList();
         }
 
-        public static ICollection<ProcessInfo> GenerateProcessInfo(System.Diagnostics.Process[] processes, 
-                                                                   bool groupByName,
-                                                                   string sortOrder)
+        public static ICollection<ProcessInfo> GenerateProcessInfo(System.Diagnostics.Process[] processes, Options options)
         {
-            ICollection<ProcessInfo> processInfoColl = null;
-            if (groupByName)
+            List<ProcessInfo> processInfoColl = null;
+            if (options.GroupByName)
                 processInfoColl = GenerateProcessInfo_GroupByName(processes);
             else
                 processInfoColl = GenerateProcessInfo_NoGroup(processes);
 
-            if (sortOrder != null)
+            //  purge all those below Threshold memory usage
+            if(options.Threshold > 0)
+                processInfoColl.RemoveAll(x => x.WorkingSet < options.Threshold * 1024 * 1024);
+
+
+            if (options.SortOption != null)
             {
                 ICollection<ProcessInfo> sorted = processInfoColl;
-                if (sortOrder == "Name")
+                if (options.SortOption == "Name")
                 {
                     sorted = processInfoColl.OrderBy<ProcessInfo, string>(item => item.Name).ToArray();
                 }
-                else if (sortOrder == "WrkSet")
+                else if (options.SortOption == "WrkSet")
                 {
                     sorted = processInfoColl.OrderByDescending<ProcessInfo, long>(item => item.WorkingSet).ToArray();
                 }
 
-                processInfoColl = sorted;
+                processInfoColl = sorted.ToList();
             }
 
             return processInfoColl;

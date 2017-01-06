@@ -22,17 +22,21 @@ namespace processtracker
           HelpText = "Prints information about provided application.")]
         public string ProcessToTrack { get; set; }
 
-        [Option('s', "sort", Required = false,
+        [Option('s', "sort", Required = false, DefaultValue = "WrkSet",
           HelpText = "Specify option to sort. Valid options are Name/WrkSet")]
         public string SortOption { get; set; }
 
-        [Option('g', "group", Required = false, DefaultValue = false,
+        [Option('g', "group", Required = false, DefaultValue = true,
           HelpText = "Specifies if the processes should be grouped")]
         public bool GroupByName { get; set; }
 
         [Option('l', "loop", Required = false, DefaultValue = -1,
           HelpText = "If data collection should be looped. Specify 0 for infinite looping or +ve number for #iterations")]
         public int Loop { get; set; }
+
+        [Option('t', "threshold", Required = false, DefaultValue = 100,
+          HelpText = "Threshold of Memory in MB below which processes are filtered")]
+        public int Threshold { get; set; }
 
         [ParserState]
         public IParserState LastParserState { get; set; }
