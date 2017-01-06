@@ -47,7 +47,7 @@ namespace processtracker
 
         public override string ToString()
         {
-            return base.ToString();
+            return GetNameString();
         }
 
         public override bool Equals(object obj)

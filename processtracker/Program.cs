@@ -166,21 +166,22 @@ namespace processtracker
                 Console.WriteLine(MemoryStatus.GetMemoryStatus());
 
                 Console.WriteLine("");
-                string pattern = "{0,-48}  {1,-16:0.00}  {2,-10}  {3,-8}  {4,-8}";
-                Console.WriteLine(string.Format(pattern, "Name (pid)", "WrkSet (MB)", "#Thds", "%CPU", "CPU(s)"));
+                string pattern = "{0,-32}  {1,-6}  {2,-16:0.00}  {3,-10}  {4,-8}  {5,-8}";
+                Console.WriteLine(string.Format(pattern, "Name", "pid", "WrkSet (MB)", "#Thds", "%CPU", "CPU(s)"));
                 Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
 
 
                 ICollection<ProcessInfo> processInfoColl = ProcessInfoGenerator.GenerateProcessInfo(processes, options);
                 foreach (var proc in processInfoColl)
                 {
-                    var processName = proc.GetNameString();
+                    var processName = proc.Name.Length < 33 ? proc.Name : proc.Name.Substring(0, 32);
+                    var idStr = proc.IsCollection() ? "#" + proc.NumInstances : proc.Id.ToString();
                     var cpuUsage = 0.0;
                     double workingSetMB = proc.WorkingSet;
                     workingSetMB /= GBtoBytes;
                     string cpuTime = proc.TotalProcessorTime.ToString(@"dd\.hh\:mm\:ss\.fff");
 
-                    Console.WriteLine(string.Format(pattern, processName, workingSetMB.ToString("N"), proc.NumThreads, cpuUsage, cpuTime));
+                    Console.WriteLine(string.Format(pattern, processName, idStr, workingSetMB.ToString("N"), proc.NumThreads, cpuUsage, cpuTime));
                 }
             }
             else
