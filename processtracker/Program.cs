@@ -23,28 +23,28 @@ namespace processtracker
         /// <summary>
         /// Indicates the total number of bytes of physical memory.
         /// </summary>
-        public ulong TotalPhys;
+        public int TotalPhys;
         /// <summary>
         /// Indicates the number of bytes of physical memory available.
         /// </summary>
-        public ulong AvailPhys;
+        public int AvailPhys;
         /// <summary>
         /// Indicates the total number of bytes that can be stored in the paging file.
         /// This number does not represent the physical size of the paging file on disk.
         /// </summary>
-        public ulong TotalPageFile;
+        public int TotalPageFile;
         /// <summary>
         /// Indicates the number of bytes available in the paging file.
         /// </summary>
-        public ulong AvailPageFile;
+        public int AvailPageFile;
         /// <summary>
         /// Indicates the total number of bytes that can be described in the user mode portion of the virtual address space of the calling process.
         /// </summary>
-        public ulong TotalVirtual;
+        public int TotalVirtual;
         /// <summary>
         /// Indicates the number of bytes of unreserved and uncommitted memory in the user mode portion of the virtual address space of the calling process.
         /// </summary>
-        public ulong AvailVirtual;
+        public int AvailVirtual;
 
         [return: MarshalAs(UnmanagedType.Bool)]
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -55,8 +55,8 @@ namespace processtracker
             var retValue = new StringBuilder();
             MemoryStatus ms = GlobalMemoryStatus();
 
-            ulong BytesFromMB = 1024 * 1024;
-            ulong BytesFromGB = BytesFromMB * 1024;
+            int BytesFromMB = 1024 * 1024;
+            int BytesFromGB = BytesFromMB * 1024;
 
             retValue.AppendLine(string.Format("Memory Load {0} %", ms.MemoryLoad));
             retValue.AppendLine(string.Format("Total Phys  {0} MB", ms.TotalPhys / BytesFromMB));
@@ -163,9 +163,8 @@ namespace processtracker
                 //Console.WriteLine("Available Memory: {0:0.00} GB", (double)compInfo.AvailablePhysicalMemory / GBtoBytes);
                 //Console.WriteLine("Total VM:         {0:0.00} GB", (double)compInfo.TotalVirtualMemory / GBtoBytes);
                 //Console.WriteLine("Available VM:     {0:0.00} GB", (double)compInfo.AvailableVirtualMemory / GBtoBytes);
-                Console.WriteLine(MemoryStatus.GetMemoryStatus());
-
-                Console.WriteLine("");
+                //Console.WriteLine(MemoryStatus.GetMemoryStatus());
+                //Console.WriteLine("");
                 string pattern = "{0,-32}  {1,-6}  {2,-16:0.00}  {3,-10}  {4,-8}  {5,-8}";
                 Console.WriteLine(string.Format(pattern, "Name", "pid", "WrkSet (MB)", "#Thds", "%CPU", "CPU(s)"));
                 Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
