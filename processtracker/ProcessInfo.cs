@@ -13,11 +13,12 @@ namespace processtracker
         public int NumInstances { get; set; }
         public TimeSpan TotalProcessorTime { get; set; }
         public int PageFaults { get; set; }
-
+        public string CommandLine { get; set; }
 
         public ProcessInfo()
         {
             NumInstances = 1;
+            CommandLine = string.Empty;
         }
 
 

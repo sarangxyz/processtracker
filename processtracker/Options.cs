@@ -26,9 +26,9 @@ namespace processtracker
           HelpText = "Specify option to sort. Valid options are Name/WrkSet")]
         public string SortOption { get; set; }
 
-        [Option('g', "group", Required = false, DefaultValue = true,
+        [Option('g', "group", Required = false, DefaultValue = 1,
           HelpText = "Specifies if the processes should be grouped")]
-        public bool GroupByName { get; set; }
+        public int GroupByNameStr { get; set; }
 
         [Option('l', "loop", Required = false, DefaultValue = -1,
           HelpText = "If data collection should be looped. Specify 0 for infinite looping or +ve number for #iterations")]
@@ -37,6 +37,27 @@ namespace processtracker
         [Option('t', "threshold", Required = false, DefaultValue = 100,
           HelpText = "Threshold of Memory in MB below which processes are filtered")]
         public int Threshold { get; set; }
+
+        [Option('c', "cmd", Required = false, DefaultValue = 0,
+          HelpText = "Show the command line of processes")]
+        public int CmdLineStr { get; set; }
+
+
+        public bool GroupByName
+        {
+            get
+            {
+                return GroupByNameStr != 0 && string.IsNullOrWhiteSpace(ProcessToTrack);
+            }
+        }
+
+        public bool CmdLine
+        {
+            get
+            {
+                return CmdLineStr != 0;
+            }
+        }
 
         [ParserState]
         public IParserState LastParserState { get; set; }

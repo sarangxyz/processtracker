@@ -150,38 +150,16 @@ namespace processtracker
             var group = options.GroupByName;
 
             System.Diagnostics.Process[] processes = GetProcesses(userType, procName);
-
-
-            int GBtoBytes = 1024 * 1024;
+            
             if (processes != null && processes.Length > 0)
             {
                 Console.WriteLine("");
                 Console.WriteLine("Total Processes:  {0}", processes.Length);
                 Console.WriteLine("");
-                //var compInfo = new Microsoft.VisualBasic.Devices.ComputerInfo();
-                //Console.WriteLine("Total Memory:     {0:0.00} GB", (double)compInfo.TotalPhysicalMemory / GBtoBytes);
-                //Console.WriteLine("Available Memory: {0:0.00} GB", (double)compInfo.AvailablePhysicalMemory / GBtoBytes);
-                //Console.WriteLine("Total VM:         {0:0.00} GB", (double)compInfo.TotalVirtualMemory / GBtoBytes);
-                //Console.WriteLine("Available VM:     {0:0.00} GB", (double)compInfo.AvailableVirtualMemory / GBtoBytes);
-                //Console.WriteLine(MemoryStatus.GetMemoryStatus());
-                //Console.WriteLine("");
-                string pattern = "{0,-32}  {1,-6}  {2,-16:0.00}  {3,-10}  {4,-8}  {5,-8}";
-                Console.WriteLine(string.Format(pattern, "Name", "pid", "WrkSet (MB)", "#Thds", "%CPU", "CPU(s)"));
-                Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
-
 
                 ICollection<ProcessInfo> processInfoColl = ProcessInfoGenerator.GenerateProcessInfo(processes, options);
-                foreach (var proc in processInfoColl)
-                {
-                    var processName = proc.Name.Length < 33 ? proc.Name : proc.Name.Substring(0, 32);
-                    var idStr = proc.IsCollection() ? "#" + proc.NumInstances : proc.Id.ToString();
-                    var cpuUsage = 0.0;
-                    double workingSetMB = proc.WorkingSet;
-                    workingSetMB /= GBtoBytes;
-                    string cpuTime = proc.TotalProcessorTime.ToString(@"dd\.hh\:mm\:ss\.fff");
-
-                    Console.WriteLine(string.Format(pattern, processName, idStr, workingSetMB.ToString("N"), proc.NumThreads, cpuUsage, cpuTime));
-                }
+                InfoPrinter printer = new InfoPrinter(options);
+                printer.Print(processInfoColl);
             }
             else
             {
@@ -207,6 +185,7 @@ namespace processtracker
         static Options Options = null;
         static int Counter = 0;
 
+        
         static void Main(string[] args)
         {
             About();
@@ -216,7 +195,7 @@ namespace processtracker
             {
                 Environment.Exit(0);
             }
-
+            
             //  no loop
             if (Options.Loop == -1)
             {
