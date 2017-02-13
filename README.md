@@ -45,10 +45,13 @@ CommandLine: "C:\MSOffice\Office15\EXCEL.EXE"
 ```
 
 in case you want detailed info about all running instances of a certain process command would be.
-(-t is for threshold here, show any process with WrkSet greater than 0 and -c is for showing command line):
+(-t is for threshold here, show any process with WrkSet greater than 10 MB and -c is for showing command line):
+
+(default threshold value is 100MB):
+
 
 ```
-c:\>procs -p notepad2 -t 0 -c 1
+c:\>procs -p notepad2 -t 10 -c 1
 
 Total Processes:  3
 
